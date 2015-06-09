@@ -111,6 +111,8 @@ def download_reqfiles(depth=1):
 			download(i,req[i]);
 
 pageLists={"http://www.w3schools.com/jquery/default.asp":"jquery.html"};
+pageLists={"http://www.w3schools.com/js/default.asp":"js.html"};
+
 download_reqfiles(2);
 
 
