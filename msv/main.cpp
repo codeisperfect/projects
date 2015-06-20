@@ -149,10 +149,12 @@ int encodeall(vector<string>inp){
 	lmf.import_file();
 	fl(i,inp.size()){
 		pair<string, string> fl=getfext(inp[i]);
+		string msvname = fl.first + ".msv" + fl.second;
 		if(getmodftime(inp[i])!=lmf.getlmtime(inp[i])){
-			write_file(fl.first+".msv"+fl.second, encode(read_file(inp[i])));
+			write_file(msvname, encode(read_file(inp[i])));
 			modfiles.push_back(inp[i]);
-			lmf.setlmtime(getmodftime(inp[i]));
+			lmf.setlmtime(inp[i]);
+			lmf.setlmtime(msvname);
 		}
 	}
 	lmf.export_file();
@@ -160,41 +162,76 @@ int encodeall(vector<string>inp){
 	print_svector(modfiles,"\n");
 }
 
+int decodeall(vector<string>inp){
+	vector<string>modfiles;
+	lmf.import_file();
+	fl(i,inp.size()){
+		pair<string, string> fl = getfext(inp[i]);
+		string msvname = fl.first + ".msv" + fl.second;
+		if(getmodftime(msvname) != lmf.getlmtime(msvname)){
+			write_file(inp[i], decode(read_file(msvname)));
+			modfiles.push_back(inp[i]);
+			lmf.setlmtime(inp[i]);
+			lmf.setlmtime(msvname);
+		}
+	}
+	lmf.export_file();
+	cout<<" Decoded "<<modfiles.size()<<" Files"<<endl;
+	print_svector(modfiles,"\n");
+}
 
+int configed(bool isencode = true){
+	if(isencode){
+		cout<<elc(string("./msv earg ")+implode(getneededfile()," "));
+	} else {
+		cout<<elc(string("./msv darg ")+implode(getneededfile()," "));
+	}
+}
 
 int main(int argc, char *argv[]){
 
 //	cout<<elc("stat -c %y main.cpp")<<"---"<<endl;
 
-
-	lmf.import_file();
-	lmf.setlmtime("main.cpp");
-	lmf.setlmtime("use.h");
-	lmf.export_file();
-
-
-
-
 	if(argc<2){
 		cout<<"Are.. kuchh Arguments to do ?"<<endl;
 	} else{
 		string cmd=argv[1];
-		if(cmd=="g"){
-			vector<string>inp;
-			fl(i,argc-2){
-				inp.push_back(argv[i+2]);
+		if(false){
+			if(cmd=="g"){
+				vector<string>inp;
+				fl(i,argc-2){
+					inp.push_back(argv[i+2]);
+				}
+				print_svector(inp,"\n");
+				cout<<getallchar(inp)<<endl;
+			} else if(cmd=="gall"){
+				cout<<elc(string("./msv g ")+implode(getneededfile()," "));
 			}
-			print_svector(inp,"\n");
-			cout<<getallchar(inp)<<endl;
-		} else if(cmd=="gall"){
-			cout<<elc(string("./msv g ")+implode(getneededfile()," "));
 		} else if(cmd=="earg"){
 			vector<string>inp;
 			fl(i,argc-2){
 				inp.push_back(argv[i+2]);
 			}
 			encodeall(inp);
-		} else{
+		} else if(cmd=="darg"){
+			vector<string>inp;
+			fl(i,argc-2){
+				inp.push_back(argv[i+2]);
+			}
+			decodeall(inp);
+		} else if(cmd=="e"){
+			cout<<elc(string("./msv earg ")+implode(getneededfile()," "));
+		} else if(cmd=="d"){
+			cout<<elc(string("./msv darg ")+implode(getneededfile()," "));
+		} else if(cmd=="push"){
+			configed(true);
+			string cmsg = "Changes";
+			if(argc > 2)
+				cmsg = argv[2];
+			cout << elc(string("git add '*'; git commit -m '")+cmsg+"' ; git push -u origin master");
+		} else if(cmd == "pull") {
+			elc(string("git pull -u origin master && ") + ("./msv darg ")+implode(getneededfile(), " ") );
+		} else {
 		}
 	}
 
@@ -202,9 +239,6 @@ int main(int argc, char *argv[]){
 
 //	write_file("main.msvcpp1",encode(read_file("main.cpp")));
 //	write_file("main.msvcpp_de",decode(read_file("main.msvcpp")));
-
-
-
 
 
 	return 0;

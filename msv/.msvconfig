@@ -1,9 +1,8 @@
-8
-~/private_html/teaching/*.php
-~/private_html/teaching/js/*.js
-~/private_html/teaching/css/css.js
-~/private_html/teaching/css/css.js
-~/private_html/teaching/modules/*.php
-~/private_html/teaching/php/*.php
-~/private_html/teaching/includes/*.php
-~/private_html/teaching/application/*/*.php
+7
+/tmp/teaching/*.php
+/tmp/teaching/js/*.js
+/tmp/teaching/css/*.css
+/tmp/teaching/modules/*.php
+/tmp/teaching/php/*.php
+/tmp/teaching/includes/*.php
+/tmp/teaching/application/*/*.php
