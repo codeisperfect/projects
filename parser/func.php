@@ -1,4 +1,3 @@
-Saini 34+44+44
 <?php
 	function div($a, $b) {
 		return ($a-($a%$b))/$b;

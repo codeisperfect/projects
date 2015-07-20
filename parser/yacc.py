@@ -1,5 +1,6 @@
 from plex import *
-import copy;
+import copy, sys;
+from mslib import *
 
 
 def tokenize(filename):
@@ -17,7 +18,7 @@ def tokenize(filename):
 
 	#php tockens
 	phpvar = Rep1(Str("$")) + name
-	resword = Str("if", "then", "else", "end", "for", "<?php", "?>", "=>", "::", "&&", "||", "==", "!==", "===", "!=", "++", "--", "+=", "*=", "-=", "/=" ) | Any("+-!@$%^&*()+=/?><.,[]{};:|")
+	resword = Str("foreach", "public", "static", "function", "if", "then", "else", "end", "for", "<?php", "?>", "=>", "::", "&&", "||", "==", "!==", "===", "!=", "++", "--", "+=", "*=", "-=", "/=", "->", "<=", ">=", "<>" ) | Any("+-!@$%^&*()+=/?><.,[]{};:|")
 
 
 	phpparser = Lexicon([
@@ -66,11 +67,11 @@ def tokenize(filename):
 		else:
 			islastins = 0;
 		if(parsedfile[i][0][0]=='ins_string'):
-			outp.append(["string", '"'+parsedfile[i][1]+'"'] );
+			outp.append([["string"], '"'+parsedfile[i][1]+'"'] );
 		elif(parsedfile[i][0][0]=='ins_phpvar'):
-			outp.append(['phpvar', parsedfile[i][1]]);
+			outp.append([['phpvar'], parsedfile[i][1]]);
 		else:
-			outp.append([parsedfile[i][0][0], parsedfile[i][1]]);
+			outp.append([[parsedfile[i][0][0]], parsedfile[i][1]]);
 	return outp;
 
 
@@ -97,8 +98,20 @@ rules = [
 'exp : exp "|" exp',
 'exp : exp "^" exp',
 'exp : exp "." exp',
-'exp : "(" exp ")"',
+'exp : "[" exp "]"',
+'args : exp ',
+'farg : exp ',
+'exp : exp "(" exp ")"',
+'assign : exp "=" exp',
+'farg : assign',
+'fargs : farg',
+'fargs : fargs "," farg',
+'exp : exp "(" args ")" ',
+'args : args "," exp ',
 ];
+
+#args : Argument during function call.
+#dargs : Arguments during defining function.
 
 def exprules(inpp):
 	inp = list(inpp);
@@ -113,7 +126,7 @@ def exprules(inpp):
 def ismatch(yrule, inplist):
 	if(len(yrule) == len(inplist)):
 		for i in range(len(yrule)):
-			if (not(yrule[i][0] == inplist[i][0] and (yrule[i][1] == '' or yrule[i][1] == inplist[i][1]) )):
+			if (not(yrule[i][0] in inplist[i][0] and (yrule[i][1] == '' or yrule[i][1] == inplist[i][1]) )):
 				return False;
 		return True;
 	else:
@@ -124,8 +137,14 @@ def applyrule(yrule, inplist):
 		modfinplist=[];
 		i=0;
 		while(i<len(inplist)):
-			if( ismatch( yrule[1:], inplist[i:i+len(yrule[1:])]) ):
-				modfinplist.append([ yrule[0][0], inplist[i:i+len(yrule[1:])] ]);
+			if( ismatch( yrule[1:], inplist[i:i+len(yrule[1:])]) and ( len(yrule[1:]) > 1 or yrule[0][0] not in inplist[i][0]) ):
+				newtype = [yrule[0][0]];
+				if(len(yrule[1:]) == 1 and yrule[0][0] not in inplist[i][0] ):
+					newtype+=inplist[i][0];
+				if( len(yrule[1:]) ==1 ):
+					modfinplist
+				else:
+					modfinplist.append([newtype , inplist[i:i+len(yrule[1:])] ]);
 				i+=len(yrule[1:])-1;
 			else:
 				modfinplist.append(inplist[i]);
@@ -150,12 +169,22 @@ def reduse(yrules, inplist):
 				break;
 	return inplist;
 
-#def recreate()
+def recreate(inp):
+	outp = "";
+	if(type(inp) == str):
+		outp += inp+" ";
+	elif(type(inp) == list):
+		for i in inp:
+			outp += recreate(i[1]);
+	return outp;
+
 
 def printtoken(outp):
 	f=open("mohit.php", "w");
 	f.write("--------------------\n".join(list( str(i[0])+":"+str(i[1]) for i in outp)));
 	f.close();
+
+
 
 
 
@@ -167,6 +196,8 @@ a = tokenize("func.php");
 b = reduse(yrules, list(a));
 
 printtoken(b);
+
+#write_file("/home/btech/cs1120233/private_html/player/funco.php", recreate(b));
 
 
 
