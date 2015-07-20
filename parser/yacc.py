@@ -1,3 +1,5 @@
+#Conclusion : All was bullshit
+
 from plex import *
 import copy, sys;
 from mslib import *
@@ -18,8 +20,8 @@ def tokenize(filename):
 
 	#php tockens
 	phpvar = Rep1(Str("$")) + name
-	resword = Str("foreach", "public", "static", "function", "if", "then", "else", "end", "for", "<?php", "?>", "=>", "::", "&&", "||", "==", "!==", "===", "!=", "++", "--", "+=", "*=", "-=", "/=", "->", "<=", ">=", "<>" ) | Any("+-!@$%^&*()+=/?><.,[]{};:|")
-
+	resword = Str("foreach", "global", "new", "return", "public", "static", "function", "if", "then", "else", "end", "for", "<?php", "?>", "=>", "::",  "++", "--", "+=", "*=", "-=", "/=", "->" ) | Any("!$()=?,[]{};:")
+	binoper = Any("+-*/%.<>^&|@") | Str("&&", "||", "==", "!==", "===", "!=", "<=", ">=", "<>");
 
 	phpparser = Lexicon([
 		State("comment_started", [
@@ -33,6 +35,7 @@ def tokenize(filename):
 			(AnyBut(""), IGNORE)
 			]),
 		(resword, ["resword", TEXT]),
+		(binoper, ["binoper", TEXT]),
 		(phpvar, ["phpvar", TEXT]),
 		(number, ["number", TEXT]),
 		(name, ["name", TEXT]),
@@ -62,7 +65,7 @@ def tokenize(filename):
 	for i in range(len(parsedfile)):
 		if(parsedfile[i][0][0][:4] == 'ins_'):
 			if(islastins):
-				outp.append(["resword", "."]);
+				outp.append(["binoper", "."]);
 			islastins = 1;
 		else:
 			islastins = 0;
@@ -76,38 +79,44 @@ def tokenize(filename):
 
 
 
-"name number phpvar resword string"
+"name number phpvar resword string binoper"
 
 rules = [
 "exp : number",
 "exp : phpvar",
 "exp : string",
 "exp : name",
-'exp : exp "+" exp',
-'exp : exp "-" exp',
-'exp : exp "*" exp',
-'exp : exp "/" exp',
-'exp : exp "%" exp',
-'exp : exp "&&" exp',
-'exp : exp "||" exp',
-'exp : exp "==" exp',
-'exp : exp "===" exp',
-'exp : exp "!=" exp',
-'exp : exp "!==" exp',
-'exp : exp "&" exp',
-'exp : exp "|" exp',
-'exp : exp "^" exp',
-'exp : exp "." exp',
-'exp : "[" exp "]"',
+'exp : exp binoper exp',
+'exp : exp "->" exp',
+'exp : exp "<=" exp',
+'exp : exp ">=" exp',
+'exp : exp ">" exp',
+'exp : exp "<" exp',
+
+'exp : exp "[" exp "]"',
 'args : exp ',
 'farg : exp ',
 'exp : exp "(" exp ")"',
 'assign : exp "=" exp',
 'farg : assign',
 'fargs : farg',
-'fargs : fargs "," farg',
+'fargs : fargs "," fargs',
 'exp : exp "(" args ")" ',
 'args : args "," exp ',
+'inst : "return" exp ";" ',
+'inst : "global" farg ";" ',
+'inst : assign ";" ',
+'insts : inst ',
+'insts : insts insts',
+'codeblock : "{" insts "}" ',
+'codeblock :  inst  ',
+'inst_if : "if" exp  codeblock ',
+'inst_if : "if" exp  codeblock "else" codeblock ',
+'fargsb : "(" fargs ")"',
+'exp : "new" name fargsb',
+'exp : name "::" name fargsb',
+'exp : name fargsb',
+'exp : "(" exp ")"',
 ];
 
 #args : Argument during function call.
@@ -142,7 +151,7 @@ def applyrule(yrule, inplist):
 				if(len(yrule[1:]) == 1 and yrule[0][0] not in inplist[i][0] ):
 					newtype+=inplist[i][0];
 				if( len(yrule[1:]) ==1 ):
-					modfinplist
+					modfinplist.append( [newtype, inplist[i][1]] );
 				else:
 					modfinplist.append([newtype , inplist[i:i+len(yrule[1:])] ]);
 				i+=len(yrule[1:])-1;
@@ -161,7 +170,7 @@ def reduse(yrules, inplist):
 			terms = list(i[0] for i in inplist);
 			pp=0;
 			for j in yrules[:1+k]:
-				print "Apply well rule ", rules[pp];
+#				print "Apply well rule ", rules[pp];
 				inplist = applyrule(j, inplist);
 				pp+=1;
 			termsnow = list(i[0] for i in inplist);
