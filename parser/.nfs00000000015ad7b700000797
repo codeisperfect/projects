@@ -1,0 +1,24 @@
+
+
+"name number phpvar resword string"
+
+rules = [
+("exp", ["number"]),
+("exp", ["phpvar"]),
+("exp", ["string" ]),
+("exp", ["name" ]),
+("exp", ["exp", ("resword", "+"), "exp"]),
+("exp", ["exp", ("resword", "*"), "exp"]),
+("exp", ["exp", ("resword", "-"), "exp"]),
+("exp", ["exp", ("resword", "&&"), "exp"]),
+("exp", ["exp", ("resword", "||"), "exp"]),
+("exp", ["exp", ("resword", "=="), "exp"]),
+("exp", ["exp", ("resword", "==="), "exp"]),
+("exp", ["exp", ("resword", "&"), "exp"]),
+("exp", ["exp", ("resword", "/"), "exp"]),
+("exp", ["exp", ("resword", "."), "exp"]),
+("exp", ["exp", ("resword", "|"), "exp"]),
+("exp", ["exp", ("resword", "^"), "exp"]),
+("exp", ["exp", ("resword", "%"), "exp"]),
+
+];
